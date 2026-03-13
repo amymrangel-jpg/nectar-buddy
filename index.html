@@ -432,30 +432,36 @@ function urlBase64ToUint8Array(base64String) {
   return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
 }
 
-async function syncToServer(pushSubscription) {
+async function syncToServer(pushSubscription, retries = 3) {
   if (!userLocation.lat) return;
-  try {
-    await fetch(SERVER_URL + '/api/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: getUserId(),
-        zip: userLocation.zip,
-        lat: userLocation.lat,
-        lon: userLocation.lon,
-        city: userLocation.city,
-        pushSubscription: pushSubscription || undefined,
-        notifyTime: state.notifyTime || '08:00',
-        active: state.active,
-        lastChanged: state.lastChanged,
-        effectiveDueDate: state.effectiveDueDate,
-        peakTemp: state.peakTemp,
-        peakTempDate: state.peakTempDate,
-        peakType: state.peakType,
-        lastNotifiedDueDate: state.lastNotifiedDueDate
-      })
-    });
-  } catch(e) { console.error('Server sync failed:', e); }
+  for (let i = 0; i < retries; i++) {
+    try {
+      const resp = await fetch(SERVER_URL + '/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: getUserId(),
+          zip: userLocation.zip,
+          lat: userLocation.lat,
+          lon: userLocation.lon,
+          city: userLocation.city,
+          pushSubscription: pushSubscription || undefined,
+          notifyTime: state.notifyTime || '08:00',
+          active: state.active,
+          lastChanged: state.lastChanged,
+          effectiveDueDate: state.effectiveDueDate,
+          peakTemp: state.peakTemp,
+          peakTempDate: state.peakTempDate,
+          peakType: state.peakType,
+          lastNotifiedDueDate: state.lastNotifiedDueDate
+        })
+      });
+      if (resp.ok) return;
+    } catch(e) {
+      if (i < retries - 1) await new Promise(r => setTimeout(r, 5000));
+      else console.error('Server sync failed after retries:', e);
+    }
+  }
 }
 
 async function syncStateToServer() {
@@ -827,6 +833,10 @@ updateUI();
 updateNotifyTimeUI();
 if (state.active && state.lastWeatherTime && (Date.now() - new Date(state.lastWeatherTime).getTime()) > 10800000) {
   refreshWeather();
+}
+// Attempt to sync to server on load in case registration was missed
+if (userLocation.lat) {
+  registerPush().then(sub => syncToServer(sub));
 }
 
 
