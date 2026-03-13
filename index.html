@@ -412,17 +412,25 @@ function getUserId() {
 }
 
 async function registerPush() {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
+  console.log('[NB] registerPush called');
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    console.log('[NB] Push not supported');
+    return null;
+  }
   try {
+    console.log('[NB] Waiting for SW ready...');
     const reg = await navigator.serviceWorker.ready;
+    console.log('[NB] SW ready, fetching VAPID key...');
     const keyResp = await fetch(SERVER_URL + '/api/vapid-public-key');
     const { publicKey } = await keyResp.json();
+    console.log('[NB] Got VAPID key, subscribing...');
     const sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(publicKey)
     });
+    console.log('[NB] Push subscription successful');
     return sub;
-  } catch(e) { console.error('Push registration failed:', e); return null; }
+  } catch(e) { console.error('[NB] Push registration failed:', e); return null; }
 }
 
 function urlBase64ToUint8Array(base64String) {
@@ -836,10 +844,14 @@ if (state.active && state.lastWeatherTime && (Date.now() - new Date(state.lastWe
 }
 // Attempt to sync to server on load in case registration was missed
 if (userLocation.lat) {
-  // Ping server first to wake it up, then register after delay
-  fetch(SERVER_URL + '/').catch(() => {});
+  console.log('[NB] Location found, pinging server...');
+  fetch(SERVER_URL + '/').then(r => console.log('[NB] Server ping status:', r.status)).catch(e => console.error('[NB] Server ping failed:', e));
   setTimeout(() => {
-    registerPush().then(sub => syncToServer(sub));
+    console.log('[NB] Starting push registration...');
+    registerPush().then(sub => {
+      console.log('[NB] Push sub result:', sub ? 'got subscription' : 'null');
+      syncToServer(sub);
+    });
   }, 15000);
 }
 
