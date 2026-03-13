@@ -454,7 +454,10 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 async function syncToServer(pushSubscription, retries = 3) {
-  if (!userLocation.lat) return;
+  const statusEl = document.getElementById('push-status');
+  const setStatus = (msg, color) => { if (statusEl) { statusEl.textContent = msg; statusEl.style.color = color || 'var(--muted)'; } };
+  if (!userLocation.lat) { setStatus('⚠️ No location set', 'var(--warn)'); return; }
+  setStatus('⏳ Syncing with server...', 'var(--muted)');
   for (let i = 0; i < retries; i++) {
     try {
       const resp = await fetch(SERVER_URL + '/api/register', {
@@ -477,10 +480,12 @@ async function syncToServer(pushSubscription, retries = 3) {
           lastNotifiedDueDate: state.lastNotifiedDueDate
         })
       });
-      if (resp.ok) return;
+      if (resp.ok) { setStatus('✓ Server sync complete', 'var(--emerald)'); return; }
+      setStatus('⚠️ Server returned ' + resp.status, 'var(--warn)');
     } catch(e) {
+      setStatus('⏳ Retrying server sync (' + (i+1) + '/' + retries + ')...', 'var(--muted)');
       if (i < retries - 1) await new Promise(r => setTimeout(r, 5000));
-      else console.error('Server sync failed after retries:', e);
+      else setStatus('✗ Server sync failed: ' + e.message, 'var(--ruby)');
     }
   }
 }
