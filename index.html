@@ -836,7 +836,11 @@ if (state.active && state.lastWeatherTime && (Date.now() - new Date(state.lastWe
 }
 // Attempt to sync to server on load in case registration was missed
 if (userLocation.lat) {
-  registerPush().then(sub => syncToServer(sub));
+  // Ping server first to wake it up, then register after delay
+  fetch(SERVER_URL + '/').catch(() => {});
+  setTimeout(() => {
+    registerPush().then(sub => syncToServer(sub));
+  }, 15000);
 }
 
 
