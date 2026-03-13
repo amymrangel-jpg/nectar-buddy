@@ -353,6 +353,7 @@
       <option value="18:00">6:00 PM</option>
     </select>
     <div class="notify-time-note">Notifications are sent automatically — no shortcuts needed.</div>
+    <div class="notify-time-note" id="push-status" style="margin-top:6px; font-weight:500;"></div>
   </div>
 
   <div class="settings-link">
@@ -413,25 +414,36 @@ function getUserId() {
 }
 
 async function registerPush() {
+  const statusEl = document.getElementById('push-status');
+  const setStatus = (msg, color) => { if (statusEl) { statusEl.textContent = msg; statusEl.style.color = color || 'var(--muted)'; } };
   console.log('[NB] registerPush called');
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
     console.log('[NB] Push not supported');
+    setStatus('⚠️ Push not supported in this context', 'var(--warn)');
     return null;
   }
   try {
+    setStatus('⏳ Registering notifications...', 'var(--muted)');
     console.log('[NB] Waiting for SW ready...');
     const reg = await navigator.serviceWorker.ready;
     console.log('[NB] SW ready, fetching VAPID key...');
+    setStatus('⏳ Fetching server key...', 'var(--muted)');
     const keyResp = await fetch(SERVER_URL + '/api/vapid-public-key');
     const { publicKey } = await keyResp.json();
     console.log('[NB] Got VAPID key, subscribing...');
+    setStatus('⏳ Subscribing...', 'var(--muted)');
     const sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(publicKey)
     });
     console.log('[NB] Push subscription successful');
+    setStatus('✓ Notifications registered', 'var(--emerald)');
     return sub;
-  } catch(e) { console.error('[NB] Push registration failed:', e); return null; }
+  } catch(e) {
+    console.error('[NB] Push registration failed:', e);
+    setStatus('✗ Registration failed: ' + e.message, 'var(--ruby)');
+    return null;
+  }
 }
 
 function urlBase64ToUint8Array(base64String) {
