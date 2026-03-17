@@ -135,11 +135,11 @@
   .btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
 
   .weather-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; box-shadow: 0 2px 10px rgba(26,43,28,0.06); }
-  .weather-card-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 12px; font-weight: 600; }
-  .weather-row { display: flex; justify-content: space-between; align-items: center; }
+  .weather-card-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 12px; font-weight: 600; text-align: center; }
+  .weather-row { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
   .weather-temp { font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 700; color: var(--ruby); line-height: 1; }
-  .weather-desc { font-size: 13px; color: var(--muted); text-align: right; }
-  .weather-updated { font-size: 11px; color: var(--border-dark); margin-top: 5px; text-align: right; }
+  .weather-desc { font-size: 13px; color: var(--muted); text-align: center; }
+  .weather-updated { font-size: 11px; color: var(--border-dark); margin-top: 5px; text-align: center; }
   .interval-badge { background: var(--acid-bg); border: 1px solid rgba(141,182,0,0.4); border-radius: 6px; padding: 7px 12px; margin-top: 12px; font-size: 13px; color: var(--acid-dark); text-align: center; font-weight: 600; }
 
   .toggle-section { background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px; box-shadow: 0 2px 10px rgba(26,43,28,0.06); }
@@ -291,7 +291,7 @@
     <div class="weather-card-title" id="weather-card-title">Today&rsquo;s Forecast</div>
     <div class="weather-row">
       <div class="weather-temp" id="weather-temp">&mdash;</div>
-      <div>
+      <div style="text-align:center;">
         <div class="weather-desc" id="weather-desc">&mdash;</div>
         <div class="weather-updated" id="weather-updated">&mdash;</div>
       </div>
